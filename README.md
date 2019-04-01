@@ -8,7 +8,10 @@ Spotify now playing on an OLED screen
 
 # Steps
 1. connect OLED and configure rpi settings to enable it
-2. install python3 `sudo apt-get install python3` and pip3 `sudo apt-get install python3-pip`
+2. install 
+  - python3 `sudo apt-get install python3`
+  - pip3 `sudo apt-get install python3-pip`
+  - git `sudo apt-get install git`
 3. using pip3 install the following python libraries
   - Pillow
   - luma.oled
