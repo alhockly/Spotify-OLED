@@ -12,6 +12,7 @@ Spotify now playing on an OLED screen
   - python3 `sudo apt-get install python3`
   - pip3 `sudo apt-get install python3-pip`
   - git `sudo apt-get install git`
+  - libopenjp2-7 `sudo apt-get install libopenjp2-7`
 3. using pip3 install the following python libraries
   - Pillow
   - luma.oled
