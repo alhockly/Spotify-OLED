@@ -54,10 +54,8 @@ scope = 'user-read-playback-state user-library-modify'
 saved=False
 
 
-
-
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 
 class Spotify:
@@ -65,14 +63,17 @@ class Spotify:
     def my_callback(self,channel):
 
         try:
+            state = GPIO.input(21)
 
-            ##https://developer.spotify.com/documentation/web-api/reference/library/save-tracks-user/
-            ids=[]
-            ids.append(self.trackuri)
-            results = self.sp.current_user_saved_tracks_add(tracks=ids)
-            print("Added track to saved tracks")
-            global saved
-            saved=True
+            time.sleep(0.2)
+            if state == GPIO.input(21) and state==True:
+                ##https://developer.spotify.com/documentation/web-api/reference/library/save-tracks-user/
+                ids=[]
+                ids.append(self.trackuri)
+                results = self.sp.current_user_saved_tracks_add(tracks=ids)
+                print("Added track to saved tracks")
+                global saved
+                saved=True
 
         except TypeError:
             print("nothing playing to like")
