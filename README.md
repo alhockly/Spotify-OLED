@@ -1,6 +1,7 @@
 # Spotify-OLED
 Spotify now playing on an OLED screen
 
+![alt text](https://github.com/alhockly/Spotify-OLED/blob/master/Servingsuggestion.jpg?raw=true)
 
 # Part List
 1. raspberry pi (or similar) (with Wifi)
