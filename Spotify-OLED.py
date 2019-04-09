@@ -19,6 +19,10 @@ import threading
 from json.decoder import JSONDecodeError
 from datetime import datetime
 from datetime import timedelta
+import RPi.GPIO as GPIO
+
+
+
 
 
 font_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts",'cour.ttf'))
@@ -45,11 +49,37 @@ client_secret =
 redirect_uri = 'http://localhost/'
 
 username = 
-scope = 'user-read-playback-state'
+scope = 'user-read-playback-state user-library-modify'
+
+saved=False
+
+
+
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 
 class Spotify:
+
+    def my_callback(self,channel):
+
+        try:
+
+            ##https://developer.spotify.com/documentation/web-api/reference/library/save-tracks-user/
+            ids=[]
+            ids.append(self.trackuri)
+            results = self.sp.current_user_saved_tracks_add(tracks=ids)
+            print("Added track to saved tracks")
+            global saved
+            saved=True
+
+        except TypeError:
+            print("nothing playing to like")
+
+
     def __init__(self, username, scope, client_id, client_secret, redirect_uri):
+        GPIO.add_event_detect(21, GPIO.BOTH, callback=self.my_callback, bouncetime=300)
         self.username = username
         self.scope = scope
         self.client_id = client_id
@@ -74,13 +104,14 @@ class Spotify:
     def reload(self):
         try:
             if self.token:
-                sp = spotipy.Spotify(auth=self.token)
+                self.sp = spotipy.Spotify(auth=self.token)
 
                 try:
-                    playback = sp.current_playback()
+                    playback = self.sp.current_playback()
 
                     try:
                         self.track = playback['item']['name']
+                        self.trackuri = playback['item']["uri"]
                         self.artists = playback['item']['artists']
                         self.durationMs = playback['item']['duration_ms']
                         self.progressMs = playback['progress_ms']
@@ -94,11 +125,12 @@ class Spotify:
                     print("token expired getting new one")
                     # re-authenticate when token expires
                     self.token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
-                    sp = spotipy.Spotify(auth=self.token)
-                    playback = sp.current_playback()
+                    self.sp = spotipy.Spotify(auth=self.token)
 
                     try:
+                        playback = self.sp.current_playback()
                         self.track = playback['item']['name']
+                        self.trackuri = playback['item']["uri"]
                         self.artists = playback['item']['artists']
                         self.durationMs = playback['item']['duration_ms']
                         self.progressMs = playback['progress_ms']
@@ -193,7 +225,7 @@ class Seekthread(Thread):
 
     def run(self):
         while True:
-         
+
             diff=time.time()-self.lasttime
             self.lasttime=time.time()
             self.currentpos+=diff
@@ -251,13 +283,18 @@ def concatartists(artists):
     else:
         return artists[0]["name"]
 
+
+
+
 if __name__ == "__main__":
     try:
         with canvas(device) as draw:
             loadfont = ImageFont.truetype(font_path, 12)
             w, h = draw.textsize("loading", loadfont)
             draw.text(((Width/2)-(w/2), 32), "loading", font=loadfont, fill="white")
-        spotifyobj = Spotify(username=username,scope=scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
+
+        spotifyobj= Spotify(username=username,scope=scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
+
         lastsong=""
         spotifyobj.reload()
 
@@ -331,7 +368,16 @@ if __name__ == "__main__":
 
             while seekthread.end==False and seekthread.nothingplaying==False:                            ###while song is still playing. This could be while true with seekthread.end as an interrupt
 
+                if saved:
+                    with canvas(device) as draw:
+                        w, h = draw.textsize("Saved", font)
+                        draw.text(((Width / 2) - (w / 2), (Height / 2) - (h / 2)), "Saved", font=ImageFont.truetype(font_path, 22), fill="white")
+                    time.sleep(1)
+                    saved = False
+
                 with canvas(device) as draw:
+
+
                     songscrollthread.drawobj()
                     artistscrollthread.drawobj()
                     seekthread.drawobj()
