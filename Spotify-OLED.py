@@ -22,9 +22,6 @@ from datetime import timedelta
 import RPi.GPIO as GPIO
 
 
-
-
-
 font_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts",'cour.ttf'))
 
 font = ImageFont.truetype(font_path, 18)
@@ -44,11 +41,11 @@ songfontsize=19
 artistfontsize=17
 networktimeout=3
 
-client_id = 
-client_secret = 
+client_id = ""
+client_secret = ""
 redirect_uri = 'http://localhost/'
 
-username = 
+username =""
 scope = 'user-read-playback-state user-library-modify'
 
 saved=False
@@ -98,7 +95,7 @@ class Spotify:
             self.token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
 
         except (AttributeError, JSONDecodeError):
-            os.remove(".cache-{}".format(username))
+            os.remove(".cache-{}".format(str(username)))
             self.token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
 
 
