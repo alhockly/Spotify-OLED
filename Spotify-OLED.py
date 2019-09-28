@@ -21,8 +21,7 @@ from datetime import datetime
 from datetime import timedelta
 import RPi.GPIO as GPIO
 
-
-font_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts",'cour.ttf'))
+font_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts", 'cour.ttf'))
 
 font = ImageFont.truetype(font_path, 18)
 
@@ -32,24 +31,23 @@ serial = i2c(port=1, address=0x3C)
 
 # substitute ssd1331(...) or sh1106(...) below if using that device
 device = ssd1306(serial)
-Width=128
-Height=64
+Width = 128
+Height = 64
 
-scrollspeed=5
-scrollbackspeed=8
-songfontsize=19
-artistfontsize=17
-networktimeout=3
+scrollspeed = 5
+scrollbackspeed = 8
+songfontsize = 19
+artistfontsize = 17
+networktimeout = 3
 
-client_id = ""
-client_secret = ""
+client_id = "5df25986187c4d4fa2e00f6a1285372a"
+client_secret = "9d3d0d78a4b249c180185297830e5224"
 redirect_uri = 'http://localhost/'
 
-username =""
+username = "115937451"
 scope = 'user-read-playback-state user-library-modify'
 
-saved=False
-
+saved = False
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -57,24 +55,23 @@ GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 class Spotify:
 
-    def my_callback(self,channel):
+    def my_callback(self, channel):
 
         try:
             state = GPIO.input(21)
 
             time.sleep(0.2)
-            if state == GPIO.input(21) and state==True:
+            if state == GPIO.input(21) and state == True:
                 ##https://developer.spotify.com/documentation/web-api/reference/library/save-tracks-user/
-                ids=[]
+                ids = []
                 ids.append(self.trackuri)
                 results = self.sp.current_user_saved_tracks_add(tracks=ids)
                 print("Added track to saved tracks")
                 global saved
-                saved=True
+                saved = True
 
         except TypeError:
             print("nothing playing to like")
-
 
     def __init__(self, username, scope, client_id, client_secret, redirect_uri):
         GPIO.add_event_detect(21, GPIO.BOTH, callback=self.my_callback, bouncetime=300)
@@ -84,7 +81,7 @@ class Spotify:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
         self.nothingplaying = True
-        self.track=""
+        self.track = ""
 
         self.durationMs = 1
         self.progressMs = 1
@@ -97,7 +94,6 @@ class Spotify:
         except (AttributeError, JSONDecodeError):
             os.remove(".cache-{}".format(str(username)))
             self.token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
-
 
     def reload(self):
         try:
@@ -115,9 +111,9 @@ class Spotify:
                         self.progressMs = playback['progress_ms']
                         self.shuffleState = playback['shuffle_state']
                         self.isPlaying = playback['is_playing']
-                        self.nothingplaying=False
+                        self.nothingplaying = False
                     except TypeError:
-                        self.nothingplaying=True
+                        self.nothingplaying = True
 
                 except spotipy.client.SpotifyException:
                     print("token expired getting new one")
@@ -134,7 +130,7 @@ class Spotify:
                         self.progressMs = playback['progress_ms']
                         self.shuffleState = playback['shuffle_state']
                         self.isPlaying = playback['is_playing']
-                        self.nothingplaying=False
+                        self.nothingplaying = False
                     except TypeError:
                         self.nothingplaying = True
 
@@ -142,107 +138,104 @@ class Spotify:
                 print("Unable to retrieve current playback - Can't get token for ", username)
         except:
             print("network fail")
-
+            print(">>Nothing playin", self.nothingplaying, ">>Playing/paused>", self.isPlaying, "progresssMs>>>",
+                  self.progressMs)
 
     def __str__(self):
         if self.isPlaying and not self.nothingplaying:
-            return "playing "+self.track+" by "+str(self.artists[0]["name"])+" from Spotify"
+            return "playing " + self.track + " by " + str(self.artists[0]["name"]) + " from Spotify"
         return "nothing playing"
-
 
 
 class Scrollthread(Thread):
 
-    def __init__(self, word,fontsize,ypos):
+    def __init__(self, word, fontsize, ypos):
         Thread.__init__(self)
-        self.word=word
-        self.end=False
-        self.Width=Width
-        self.x=5
-        self.ypos=ypos
+        self.word = word
+        self.end = False
+        self.Width = Width
+        self.x = 5
+        self.ypos = ypos
         self.font = ImageFont.truetype(font_path, fontsize)
-        self.move=False          ##true= moving to the right
+        self.move = False  ##true= moving to the right
         self.scrolling = False
-        self.nothingplaying=False
+        self.nothingplaying = False
         with canvas(device) as draw:
-            self.w,self.h = draw.textsize(self.word,font=self.font)
-
+            self.w, self.h = draw.textsize(self.word, font=self.font)
 
     def calcscrolling(self):
         with canvas(device) as draw:
             self.w, self.h = draw.textsize(self.word, font=self.font)
-            if(self.w>Width+2):
-                self.scrolling=True
-
+            if (self.w > Width + 4):
+                #print("scroll thread",self.w-Width)
+                self.scrolling = True
 
     def run(self):  ##scroll
-        #print("scrolling",self.word)
+        # print("scrolling",self.word)
 
         while True:
-            lastmove =self.move
-            if(self.scrolling and self.end==False):                     ###This could be cleaner by only using one while loop and a reverse variable
+            lastmove = self.move
+            if (
+                    self.scrolling and self.end == False):  ###This could be cleaner by only using one while loop and a reverse variable
 
-                if(self.move):
+                if (self.move):
                     self.x += scrollbackspeed
                 else:
                     self.x -= scrollspeed
 
-                if (self.x < ((Width-self.w)-10) and self.move==False):      #was moving left and has moved enough
-                    self.move=True
+                if (self.x < ((Width - self.w) - 10) and self.move == False):  # was moving left and has moved enough
+                    self.move = True
 
                 else:
-                    if((self.x>0 and self.move==True)):                     #was moving right and more than 0
-                        self.move=False
+                    if ((self.x > 0 and self.move == True)):  # was moving right and more than 0
+                        self.move = False
 
-
-                if(self.move==False and lastmove==True):
-                    self.end=True
-                    self.x=0
+                if (self.move == False and lastmove == True):
+                    self.end = True
+                    self.x = 0
                     time.sleep(3)
             time.sleep(.2)
-
 
     def drawobj(self):
         if not self.nothingplaying:
             draw.text((self.x, self.ypos), self.word, font=self.font, fill="white")
-            #print("drawn at",self.x,self.ypos)
-
+            # print("drawn at",self.x,self.ypos)
 
 
 class Seekthread(Thread):
-    def __init__(self,currentpos,songlen,isplaying):
+    def __init__(self, currentpos, songlen, isplaying):
         Thread.__init__(self)
-        self.padding=2
-        self.currentpos=currentpos
-        self.lasttime=int(time.time())
-        self.songlen=songlen
-        self.end=False
-        self.isplaying=isplaying            ####these sound the same but they are different. isplaying ->  music playing (true) or is paused (false)
-        self.nothingplaying=False           ##There are no devices connected to spotify, or an advert is playing (true), no device connected (false)
-
+        self.padding = 2
+        self.currentpos = currentpos
+        self.lasttime = int(time.time())
+        self.songlen = songlen
+        self.end = False
+        self.isplaying = isplaying  ####these sound the same but they are different. isplaying ->  music playing (true) or is paused (false)
+        self.nothingplaying = False  ##There are no devices connected to spotify, or an advert is playing (true), no device connected (false)
 
     def run(self):
         while True:
 
-            diff=time.time()-self.lasttime
-            self.lasttime=time.time()
-            self.currentpos+=diff
-            percent=self.currentpos/self.songlen
-            #print(int(percent*100),"%")
-            self.xpos=int((percent)*(Width-self.padding*2))+2
-            if(percent>=1):
-                self.end=True
+            diff = time.time() - self.lasttime
+            self.lasttime = time.time()
+            self.currentpos += diff
+            percent = self.currentpos / self.songlen
+            # print(int(percent*100),"%")
+            self.xpos = int((percent) * (Width - self.padding * 2)) + 2
+            if (percent >= 1):
+                self.end = True
             else:
-                self.end=False
+                self.end = False
             time.sleep(1)
 
-    def setcurrentpos(self,currentpos):
-        self.currentpos=currentpos
+    def setcurrentpos(self, currentpos):
+        self.currentpos = currentpos
 
     def drawobj(self):
         if not self.nothingplaying:
-            if(self.isplaying):
-                draw.rectangle((5, (Height - 6), (Width - 5), (Height - 2)), "black", "white",1)  ###scroll bar 6 high with 5 xpadding and 2 bottom padding
+            if (self.isplaying):
+                draw.rectangle((5, (Height - 6), (Width - 5), (Height - 2)), "black", "white",
+                               1)  ###scroll bar 6 high with 5 xpadding and 2 bottom padding
                 ##10 high * 4 wide current position marker
                 draw.rectangle((self.xpos - 2, (Height - 10), (self.xpos + 2), (Height)), "black", "white", 4)
             else:
@@ -251,37 +244,46 @@ class Seekthread(Thread):
                 draw.rectangle((54, (Height - 14), (58), (Height)), "black", "white", 2)
         else:
             font = ImageFont.truetype(font_path, 12)
-            w,h = draw.textsize("Nothing playing",font)
-            draw.text(((Width/2)-(w/2),Height-h),"Nothing playing",font=font,fill="white")
+            w, h = draw.textsize("Nothing playing", font)
+            draw.text(((Width / 2) - (w / 2), Height - h), "Nothing playing", font=font, fill="white")
 
 
 def removefeat(trackname):
     if "(feat" in trackname:
         start = trackname.index("(feat")
-        end=trackname.index(")")+2
-        return trackname.replace(trackname[start:end],"")
-    if "(with." in trackname:
-        start = trackname.index("(with.")
-        end.trackname.index(")")+2
+        end = trackname.index(")") + 2
         return trackname.replace(trackname[start:end], "")
-    if "(featuring." in trackname:
-        start = trackname.index("(featuring.")
-        end.trackname.index(")")+2
+    if "(with" in trackname:
+        start = trackname.index("(with")
+        end=trackname.index(")") + 2
         return trackname.replace(trackname[start:end], "")
-
+    if "(featuring" in trackname:
+        start = trackname.index("(featuring")
+        end=trackname.index(")") + 2
+        return trackname.replace(trackname[start:end], "")
+    if "ft." in trackname:
+        end = trackname.index("ft.")
+        return trackname[0:end]
+    if "feat." in trackname:
+        end = trackname.index("feat.")
+        return trackname[0:end]
+    ###TODO add condition for & and maybe x
     return trackname
 
+
 def concatartists(artists):
-    if len(artists)>1:
-        names =""
-        names+=artists[0]["name"]
-        for i in range(1,len(artists)):
-            names+=","+artists[i]["name"]
+    if len(artists) > 1:
+        names = ""
+        names += artists[0]["name"]
+        for i in range(1, len(artists)):
+            #print("artists>>>",artists)
+            names += "," + artists[i]["name"]
+        names=names.replace(",,",",")
+        names=names.replace(",",", ")
+        print(names)
         return names
     else:
         return artists[0]["name"]
-
-
 
 
 if __name__ == "__main__":
@@ -289,12 +291,17 @@ if __name__ == "__main__":
         with canvas(device) as draw:
             loadfont = ImageFont.truetype(font_path, 12)
             w, h = draw.textsize("loading", loadfont)
-            draw.text(((Width/2)-(w/2), 32), "loading", font=loadfont, fill="white")
+            draw.text(((Width / 2) - (w / 2), 32), "loading", font=loadfont, fill="white")
 
-        spotifyobj= Spotify(username=username,scope=scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
+        spotifyobj = Spotify(username=username, scope=scope, client_id=client_id, client_secret=client_secret,
+                             redirect_uri=redirect_uri)
 
-        lastsong=""
+        lastsong = None
         spotifyobj.reload()
+        try:
+            print(spotifyobj)
+        except:
+            pass
 
         justdrawtime = datetime.now() + timedelta(seconds=networktimeout)
 
@@ -302,7 +309,7 @@ if __name__ == "__main__":
             songscrollthread = Scrollthread(word=removefeat(spotifyobj.track), fontsize=songfontsize, ypos=5)
             artistscrollthread = Scrollthread(word=spotifyobj.artists[0]["name"], fontsize=artistfontsize, ypos=30)
 
-        except:         ##there is no data as nothing is playing
+        except:  ##there is no data as nothing is playing
             songscrollthread = Scrollthread(word="", fontsize=songfontsize, ypos=5)
             artistscrollthread = Scrollthread(word="", fontsize=artistfontsize, ypos=30)
 
@@ -326,100 +333,113 @@ if __name__ == "__main__":
                 artistscrollthread.drawobj()
                 seekthread.drawobj()
 
-        while True:
-
-
+        while True:  ####   Main loop
+            lastsongdat = ""
             try:
                 playing = spotifyobj.isPlaying
-                lastsong=spotifyobj.track+spotifyobj.artists[0]["name"]
+                lastsong = spotifyobj.track + spotifyobj.artists[0]["name"]
+                # print("lastsong==", lastsong)
+
             except AttributeError:
                 pass
-            print(spotifyobj)
 
-            songscrollthread.nothingplaying=spotifyobj.nothingplaying
-            songscrollthread.scrolling=False
-            songscrollthread.x=0
-            songscrollthread.word=removefeat(spotifyobj.track)
+            # print(spotifyobj)
+
+            songscrollthread.nothingplaying = spotifyobj.nothingplaying
+            songscrollthread.scrolling = False
+            songscrollthread.x = 0
+            songscrollthread.word = removefeat(spotifyobj.track)
             songscrollthread.calcscrolling()
 
             artistscrollthread.scrolling = False
             artistscrollthread.x = 0
-            artistscrollthread.nothingplaying=spotifyobj.nothingplaying
+            artistscrollthread.nothingplaying = spotifyobj.nothingplaying
             try:
                 artistscrollthread.word = concatartists(spotifyobj.artists)
             except:
-               pass
+                pass
             artistscrollthread.calcscrolling()
 
-
             seekthread.currentpos = spotifyobj.progressMs / 1000
-            seekthread.songlen=spotifyobj.durationMs/1000
+            seekthread.songlen = spotifyobj.durationMs / 1000
             seekthread.isplaying = spotifyobj.isPlaying
-            seekthread.nothingplaying=spotifyobj.nothingplaying
+            seekthread.nothingplaying = spotifyobj.nothingplaying
 
-
-            if spotifyobj.progressMs<spotifyobj.durationMs:
-                seekthread.end=False
+            if spotifyobj.progressMs < spotifyobj.durationMs:
+                seekthread.end = False
             else:
-                seekthread.end=True
+                seekthread.end = True
 
-
-            while seekthread.end==False and seekthread.nothingplaying==False:                            ###while song is still playing. This could be while true with seekthread.end as an interrupt
+            while seekthread.end == False and seekthread.nothingplaying == False:  ###while song is still playing. This could possibly be while true with seekthread.end as an interrupt
 
                 if saved:
                     with canvas(device) as draw:
                         w, h = draw.textsize("Saved", font)
-                        draw.text(((Width / 2) - (w / 2), (Height / 2) - (h / 2)), "Saved", font=ImageFont.truetype(font_path, 22), fill="white")
+                        draw.text(((Width / 2) - (w / 2), (Height / 2) - (h / 2)), "Saved",
+                                  font=ImageFont.truetype(font_path, 22), fill="white")
                     time.sleep(1)
                     saved = False
 
                 with canvas(device) as draw:
 
-
                     songscrollthread.drawobj()
                     artistscrollthread.drawobj()
                     seekthread.drawobj()
 
-                if(datetime.now()>justdrawtime):
+                if (datetime.now() > justdrawtime):
 
-                    if(songscrollthread.scrolling==False):      ###potentitally should check if both are not scrolling
-                        #print("checking song")
+                    if (songscrollthread.scrolling == False):  ###song scroll has stopped therefore song has finished
+                        # print("checking song")
                         spotifyobj.reload()
-                        seekthread.currentpos=spotifyobj.progressMs/1000
-                        seekthread.isplaying=spotifyobj.isPlaying
+                        seekthread.currentpos = spotifyobj.progressMs / 1000
+                        seekthread.isplaying = spotifyobj.isPlaying
                         seekthread.nothingplaying = spotifyobj.nothingplaying
                         justdrawtime = datetime.now() + timedelta(seconds=networktimeout)
 
-                        if(spotifyobj.track+spotifyobj.artists[0]["name"]!=lastsong):
+                        if (spotifyobj.track + spotifyobj.artists[0]["name"] != lastsong):
+                            #print("diff track >> line 388 ish")
+                            lastsong = spotifyobj.track + spotifyobj.artists[0]["name"]
+                            print(spotifyobj)
                             break
                         else:
                             artistscrollthread.end = False
 
-
                     else:
-                        #print("songscroll.end",songscrollthread.end,"songscroll.x",songscrollthread.x,"move",songscrollthread.move)
-                        if(artistscrollthread.end):
-                            artistscrollthread.end=False
-                        if(songscrollthread.end):           ###potentially should check if both scrolls are at 0 but
-                            #print("scroll ended, checking song")
+                        # print("songscroll.end",songscrollthread.end,"songscroll.x",songscrollthread.x,"move",songscrollthread.move)
+                        if (artistscrollthread.end):
+                            artistscrollthread.end = False
+                        if (songscrollthread.end):  ###potentially should check if both scrolls are at 0 but
+                            # print("scroll ended, checking song")
                             spotifyobj.reload()
                             seekthread.currentpos = spotifyobj.progressMs / 1000
                             seekthread.isplaying = spotifyobj.isPlaying
-                            seekthread.nothingplaying=spotifyobj.nothingplaying
+                            seekthread.nothingplaying = spotifyobj.nothingplaying
+
                             if (spotifyobj.track + spotifyobj.artists[0]["name"] != lastsong):
-                                #print("diff song")
+                                #print("diff song >>>line 405 ish")
+                                lastsong = spotifyobj.track + spotifyobj.artists[0]["name"]
+                                print(spotifyobj)
                                 break
                             else:
-                                #songscrollthread.x=0
-                                songscrollthread.end=False
+                                # songscrollthread.x=0
+                                songscrollthread.end = False
                                 artistscrollthread.end = False
                                 justdrawtime = datetime.now() + timedelta(seconds=networktimeout)
+
+
                 else:
                     pass
-                    #print("only drawing")
+                    # print("only drawing")         ###using this frame of the main loop to nothing while worker thread render the UI
 
             spotifyobj.reload()
+            if (spotifyobj.track + spotifyobj.artists[0]["name"] != lastsong):
+                #print("diff song >>>line 427 ish")
+                print(spotifyobj)
+
+
 
 
     except KeyboardInterrupt:
         pass
+
+#TODO change lastsong var to use same class as spotifyobj
