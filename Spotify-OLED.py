@@ -46,7 +46,6 @@ redirect_uri = 'http://localhost/'
 
 username = "115937451"
 
-
 scope = 'user-read-playback-state user-library-modify'
 
 saved = False
@@ -264,7 +263,6 @@ def removefeat(trackname):
     if "(featuring." in trackname:
         start = trackname.index("(featuring.")
         end.trackname.index(")") + 2
-
         return trackname.replace(trackname[start:end], "")
     if "(featuring" in trackname:
         start = trackname.index("(featuring")
