@@ -61,7 +61,6 @@ class Spotify:
 
         try:
             state = GPIO.input(21)
-
             time.sleep(0.2)
             if state == GPIO.input(21) and state == True:
                 ##https://developer.spotify.com/documentation/web-api/reference/library/save-tracks-user/
@@ -101,10 +100,8 @@ class Spotify:
         try:
             if self.token:
                 self.sp = spotipy.Spotify(auth=self.token)
-
                 try:
                     playback = self.sp.current_playback()
-
                     try:
                         self.track = playback['item']['name']
                         self.trackuri = playback['item']["uri"]
@@ -171,7 +168,6 @@ class Scrollthread(Thread):
 
             if (self.w > Width + 4):
                 #print("scroll thread",self.w-Width)
-
                 self.scrolling = True
 
     def run(self):  ##scroll
@@ -256,12 +252,10 @@ def removefeat(trackname):
     if "(feat" in trackname:
         start = trackname.index("(feat")
         end = trackname.index(")") + 2
-
         return trackname.replace(trackname[start:end], "")
     if "(with" in trackname:
         start = trackname.index("(with")
         end=trackname.index(")") + 2
-
         return trackname.replace(trackname[start:end], "")
     if "(with." in trackname:
         start = trackname.index("(with.")
@@ -287,18 +281,22 @@ def removefeat(trackname):
 
 
 def concatartists(artists):
+    print("spotifyobj list")
+    for artist in artists:
+        print("|"+artist["name"])
     if len(artists) > 1:
         names = ""
-        names += artists[0]["name"]
-        for i in range(1, len(artists)):
 
-            #print("artists>>>",artists)
-            names += "," + artists[i]["name"]
-        names=names.replace(",,",",")
-        names=names.replace(",",", ")
-        print(names)
+        for i in range(0, len(artists)):
+            if i==len(artists)-1:
+                names+=artists[i]["name"]
+            else:
+                names+=artists[i]["name"]+", "
 
-        names += "," + artists[i]["name"]
+         ##check for dupe artist name WYYD - Girl Unit
+
+        print("BIG STR:",names)
+
 
         return names
     else:
