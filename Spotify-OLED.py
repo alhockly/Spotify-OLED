@@ -45,6 +45,8 @@ client_secret = "9d3d0d78a4b249c180185297830e5224"
 redirect_uri = 'http://localhost/'
 
 username = "115937451"
+
+
 scope = 'user-read-playback-state user-library-modify'
 
 saved = False
@@ -166,8 +168,10 @@ class Scrollthread(Thread):
     def calcscrolling(self):
         with canvas(device) as draw:
             self.w, self.h = draw.textsize(self.word, font=self.font)
+
             if (self.w > Width + 4):
                 #print("scroll thread",self.w-Width)
+
                 self.scrolling = True
 
     def run(self):  ##scroll
@@ -252,10 +256,21 @@ def removefeat(trackname):
     if "(feat" in trackname:
         start = trackname.index("(feat")
         end = trackname.index(")") + 2
+
         return trackname.replace(trackname[start:end], "")
     if "(with" in trackname:
         start = trackname.index("(with")
         end=trackname.index(")") + 2
+
+        return trackname.replace(trackname[start:end], "")
+    if "(with." in trackname:
+        start = trackname.index("(with.")
+        end.trackname.index(")") + 2
+        return trackname.replace(trackname[start:end], "")
+    if "(featuring." in trackname:
+        start = trackname.index("(featuring.")
+        end.trackname.index(")") + 2
+
         return trackname.replace(trackname[start:end], "")
     if "(featuring" in trackname:
         start = trackname.index("(featuring")
@@ -276,11 +291,15 @@ def concatartists(artists):
         names = ""
         names += artists[0]["name"]
         for i in range(1, len(artists)):
+
             #print("artists>>>",artists)
             names += "," + artists[i]["name"]
         names=names.replace(",,",",")
         names=names.replace(",",", ")
         print(names)
+
+        names += "," + artists[i]["name"]
+
         return names
     else:
         return artists[0]["name"]
@@ -442,4 +461,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
 
+
 #TODO change lastsong var to use same class as spotifyobj
+
+
+#TODO add function with spotifyobj arg to seekthread that updates fields
+
