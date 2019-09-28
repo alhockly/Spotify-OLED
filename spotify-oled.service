@@ -1,0 +1,18 @@
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=Spotify oled service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/Spotify-OLED
+ExecStart=/home/pi/Spotify-OLED/Spotify-OLED.py
+ExecStartPre=/bin/sleep 10
+Type=simple
+
+[Timer]
+OnStartupSec=25
