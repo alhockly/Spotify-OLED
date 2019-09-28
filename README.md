@@ -20,5 +20,5 @@ Spotify now playing on an OLED screen
 4. install python library for spotify using `pip3 install git+https://github.com/plamere/spotipy.git --upgrade`
 5. create a spotify api app by logging in to https://developer.spotify.com/dashboard/applications with your spotify account
 6. replace details in Spotify-OLED.py with app credentials from spotify and modify screen variables to suit resolution etc.
-7. spotify-oled.py to crontab to start at boot or run using `nohup python3 Spotify-OLED &`
+7. copy spotify-oled.service from the repo to /etc/systemd/system/ and run `sudo systemctl enable spotify-oled.service` (You can also replace enable with `start` or `status` for manual starting/stoping the service)
 
